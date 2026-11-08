@@ -337,3 +337,135 @@
   border-radius: 10px;
   background: var(--gui-canvas);
 }
+
+/* P1 · shortlist by own contribution (Poster People roles: paper, ink, one contour, editorial serif) */
+.contribution-quote {
+  margin: 0 0 var(--gui-space-l);
+  padding: 0 0 0 var(--gui-space-m);
+  border-left: 3px solid var(--gui-text);
+}
+.contribution-quote blockquote {
+  margin: 0;
+}
+.contribution-quote p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--gui-text);
+}
+.contribution-quote figcaption {
+  margin-top: var(--gui-space-xs);
+  font-size: 13px;
+  color: var(--gui-text-muted-accessible);
+}
+.shortlist-intro {
+  max-width: 72ch;
+  margin: 0 0 var(--gui-space-l);
+  color: var(--gui-text);
+}
+.shortlist-simulation {
+  display: block;
+  margin-top: var(--gui-space-xs);
+  font-size: 13px;
+  color: var(--gui-text-muted-accessible);
+}
+.shortlist-job + .shortlist-job {
+  margin-top: var(--gui-space-xxl);
+}
+.shortlist-job-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gui-space-xs) var(--gui-space-m);
+  margin-bottom: var(--gui-space-m);
+}
+.shortlist-job-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.shortlist-job-header p {
+  margin: 0;
+  color: var(--gui-text-muted-accessible);
+}
+.shortlist-list {
+  display: grid;
+  gap: var(--gui-space-m);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.shortlist-card-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--gui-space-m);
+  margin-bottom: var(--gui-space-m);
+}
+.shortlist-rank {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--gui-text);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+}
+.shortlist-who {
+  display: grid;
+  min-width: 0;
+}
+.shortlist-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gui-link);
+  overflow-wrap: anywhere;
+}
+.shortlist-stage {
+  font-size: 14px;
+  color: var(--gui-text-muted-accessible);
+}
+.shortlist-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gui-space-s, 12px);
+}
+.shortlist-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gui-space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.shortlist-signals span {
+  border: 1px solid var(--gui-text);
+}
+.shortlist-rest {
+  margin: var(--gui-space-m) 0 0;
+}
+.shortlist-seed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gui-space-s, 12px);
+  margin-top: var(--gui-space-m);
+  font-size: 13px;
+  color: var(--gui-text-muted-accessible);
+}
+@media (max-width: 640px) {
+  .shortlist-card-head {
+    grid-template-columns: auto 1fr;
+  }
+  .shortlist-score {
+    grid-column: 1 / -1;
+  }
+}

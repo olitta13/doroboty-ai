@@ -1,0 +1,2 @@
+export const MIN_CONTRIBUTION_LENGTH = 20;
+export const MAX_CONTRIBUTION_LENGTH = 300;

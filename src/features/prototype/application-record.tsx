@@ -24,7 +24,15 @@ export function ApplicationRecord({
 }: {
   application: Pick<
     Application,
-    "candidateId" | "candidateName" | "jobTitle" | "stage" | "answer" | "cv" | "score" | "summary"
+    | "candidateId"
+    | "candidateName"
+    | "jobTitle"
+    | "stage"
+    | "answer"
+    | "contribution"
+    | "cv"
+    | "score"
+    | "summary"
   >;
   companyName: string;
   audience: "candidate" | "employer";
@@ -73,6 +81,24 @@ export function ApplicationRecord({
               label: "Odpowiedź",
               content: (
                 <>
+                  {application.contribution ? (
+                    <figure className="contribution-quote">
+                      <blockquote>
+                        <p>„{application.contribution}”</p>
+                      </blockquote>
+                      <figcaption>
+                        {candidate
+                          ? "Twój wkład — zdanie wysłane pracodawcy"
+                          : "Mój wkład — zdanie kandydata"}
+                      </figcaption>
+                    </figure>
+                  ) : (
+                    !candidate && (
+                      <p className="record-caption">
+                        Kandydat nie opisał własnego wkładu (aplikacja sprzed zmiany formularza).
+                      </p>
+                    )
+                  )}
                   <h3>Przesłana aplikacja</h3>
                   <p>{application.answer}</p>
                 </>

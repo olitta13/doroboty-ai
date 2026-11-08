@@ -2,6 +2,7 @@ import { z } from "zod";
 import marketplace from "./data/marketplace.json" with { type: "json" };
 import people from "./data/people.json" with { type: "json" };
 import type { JobWithCompany } from "@/features/jobs/types";
+import { DEMO_PREFIX, demoApplicants } from "./shortlist";
 
 const id = z
   .string()
@@ -11,6 +12,8 @@ const id = z
 const shortText = z.string().trim().min(1).max(200);
 const text = z.string().trim().max(12000);
 export const MIN_APPLICATION_ANSWER_LENGTH = 20;
+export { MIN_CONTRIBUTION_LENGTH, MAX_CONTRIBUTION_LENGTH } from "./constants";
+import { MAX_CONTRIBUTION_LENGTH } from "./constants";
 const companySchema = z.object({
   id,
   slug: id,
@@ -113,6 +116,8 @@ const applicationSchema = z.object({
   candidateName: shortText,
   cv: text.min(20),
   answer: text.min(MIN_APPLICATION_ANSWER_LENGTH),
+  /** Candidate's own one-sentence contribution (prototype P1); empty in older saves. */
+  contribution: text.max(MAX_CONTRIBUTION_LENGTH).default(""),
   sourceNotes: text,
   generatedAnswer: text,
   score: z.number().int().min(0).max(100),
@@ -129,6 +134,7 @@ const draftSchema = z.object({
   notes: text,
   generated: text,
   answer: text,
+  contribution: text.max(MAX_CONTRIBUTION_LENGTH).default(""),
 });
 export const stateSchema = z
   .object({
@@ -201,19 +207,28 @@ export type Action =
   | { type: "select_person"; id: string | null }
   | { type: "profile"; value: z.infer<typeof profileSchema> }
   | { type: "toggle_saved"; jobId: string }
-  | { type: "draft"; jobId: string; notes: string; generated: string; answer: string }
+  | {
+      type: "draft";
+      jobId: string;
+      notes: string;
+      generated: string;
+      answer: string;
+      contribution?: string;
+    }
   | {
       type: "submit";
       jobId: string;
       notes: string;
       generated: string;
       answer: string;
+      contribution?: string;
       consent: boolean;
     }
   | { type: "stage"; applicationId: string; stage: Stage; note: string }
   | { type: "withdraw"; applicationId: string }
   | { type: "publish"; job: z.infer<typeof jobSchema> }
-  | { type: "company"; name: string; description: string };
+  | { type: "company"; name: string; description: string }
+  | { type: "seed_shortlist"; jobId: string };
 
 export function initialState(): State {
   const state = stateSchema.parse({
@@ -237,6 +252,7 @@ export function initialState(): State {
     cv: bob.cv,
     answer:
       "Pracowałem nad automatyzacją obsługi zgłoszeń. Poprowadziłem badania z użytkownikami i wdrożenie, które skróciło czas odpowiedzi o 25%. Chętnie opowiem o decyzjach i ograniczeniach tego projektu.",
+    contribution: "",
     sourceNotes: "",
     generatedAnswer: "",
     score: bob.exampleScore,
@@ -308,6 +324,7 @@ export function transition(
         candidateName: p.name,
         cv: p.cv,
         answer: action.answer,
+        contribution: action.contribution ?? "",
         sourceNotes: action.notes,
         generatedAnswer: action.generated,
         score: p.exampleScore,
@@ -344,6 +361,49 @@ export function transition(
       if (s.jobs[index].companyId !== p.companyId) fail("Nie można zmienić tej oferty.");
       s.jobs[index] = job;
     } else s.jobs.unshift(job);
+  } else if (action.type === "seed_shortlist") {
+    // SIMULATION: prepared synthetic applicants for testing the shortlist.
+    const p = employer();
+    const job = s.jobs.find((x) => x.id === action.jobId && x.companyId === p.companyId);
+    if (!job) return fail("Wybierz ofertę własnej firmy.");
+    demoApplicants.forEach((demo, index) => {
+      const personId = `${DEMO_PREFIX}${demo.key}`;
+      if (!s.people.some((x) => x.id === personId))
+        s.people.push({
+          id: personId,
+          role: "candidate",
+          name: demo.name,
+          headline: `${demo.headline} · przykładowa osoba`,
+          bio: "",
+          location: "Warszawa",
+          cv: `${demo.name} — ${demo.headline}\nPrzykładowe CV przygotowane do testu krótkiej listy. Dane syntetyczne.`,
+          exampleScore: demo.score,
+          exampleSummary: demo.summary,
+        });
+      if (s.applications.some((x) => x.candidateId === personId && x.jobId === job.id)) return;
+      const at = new Date(
+        Date.parse(now) - (demoApplicants.length - index) * 3_600_000,
+      ).toISOString();
+      s.applications.push(
+        applicationSchema.parse({
+          id: `${DEMO_PREFIX}${demo.key}-${job.id}`,
+          candidateId: personId,
+          jobId: job.id,
+          companyId: job.companyId,
+          jobTitle: job.title,
+          candidateName: demo.name,
+          cv: `${demo.name} — ${demo.headline}\nPrzykładowe CV przygotowane do testu krótkiej listy. Dane syntetyczne.`,
+          answer: demo.answer,
+          contribution: demo.contribution,
+          sourceNotes: "",
+          generatedAnswer: "",
+          score: demo.score,
+          summary: demo.summary,
+          stage: "submitted",
+          events: [{ stage: "submitted", at, note: "" }],
+        }),
+      );
+    });
   } else if (action.type === "company") {
     const p = employer();
     Object.assign(

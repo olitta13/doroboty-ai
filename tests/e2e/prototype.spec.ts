@@ -7,9 +7,16 @@ async function choose(page: Page, name: string) {
   await page.goto("/#/auth/sign-in");
   await page.getByRole("button", { name: `Wejdź jako ${name}`, exact: true }).click();
 }
+const CONTRIBUTION = "Co w opisanym projekcie zrobiłaś lub zrobiłeś samodzielnie? Jedno zdanie.";
+async function fillContribution(page: Page) {
+  await page
+    .getByLabel(CONTRIBUTION)
+    .fill("Sama przeprowadziłam badania z użytkownikami; integrację zrobił zespół IT.");
+}
 async function application(page: Page) {
   await choose(page, "Anna Kowalska");
   await page.goto("/#/aplikuj/ai-product-manager");
+  await fillContribution(page);
   await page
     .getByLabel("Dlaczego pasujesz do tej roli?")
     .fill(
@@ -62,6 +69,7 @@ for (const [name, filename] of [
       "target",
       "_blank",
     );
+    await fillContribution(page);
     await page
       .getByLabel("Dlaczego pasujesz do tej roli?")
       .fill("Mam doświadczenie w rozwoju produktów i automatyzacji obsługi zgłoszeń.");
@@ -123,6 +131,7 @@ test("published job → saved offer/draft → submitted application → employer
   await expect(page.getByLabel("Twoje notatki do aplikacji (opcjonalnie)")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Przygotuj propozycję z AI" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Użyj propozycji" })).toHaveCount(0);
+  await fillContribution(page);
   await answer.fill(draftAnswer);
   await page.getByRole("button", { name: "Zapisz szkic" }).click();
   await expect(page.getByRole("status")).toHaveText("Szkic został zapisany.");
@@ -321,6 +330,7 @@ test("application submission explains short answers and missing approval without
   await page.goto("/#/aplikuj/ai-product-manager");
   const answer = page.getByLabel("Dlaczego pasujesz do tej roli?");
   const send = page.getByRole("button", { name: "Wyślij aplikację", exact: true });
+  await fillContribution(page);
   await answer.fill("krótka odpowiedź");
   await page.getByRole("checkbox").check();
   await expect(send).toBeEnabled();
@@ -356,7 +366,8 @@ for (const width of [1440, 375]) {
       generated: "Dawna propozycja AI, która nie jest zatwierdzoną odpowiedzią",
       answer: "Zapisana wcześniej odpowiedź kandydata do dalszej edycji.",
     };
-    legacy.drafts.push(draft);
+    // A version-1 draft saved before the contribution field existed.
+    legacy.drafts.push(draft as (typeof legacy.drafts)[number]);
     await choose(page, "Anna Kowalska");
     await page.goto("/#/app/settings");
     await page.getByLabel("Importuj plik scenariusza").setInputFiles({
@@ -370,7 +381,8 @@ for (const width of [1440, 375]) {
     const form = page.locator("main form");
     const answer = page.getByLabel("Dlaczego pasujesz do tej roli?");
     await expect(answer).toHaveValue(draft.answer);
-    await expect(form.getByRole("textbox")).toHaveCount(1);
+    // The legacy answer plus the empty own-contribution field (prototype P1).
+    await expect(form.getByRole("textbox")).toHaveCount(2);
     await expect(page.getByLabel("Twoje notatki do aplikacji (opcjonalnie)")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Przygotuj propozycję z AI" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Użyj propozycji" })).toHaveCount(0);
@@ -407,7 +419,7 @@ for (const width of [1440, 375]) {
         (key) => JSON.parse(localStorage.getItem(key)!).drafts.at(-1),
         STORAGE_KEY,
       ),
-    ).toEqual({ ...draft, answer: editedAnswer });
+    ).toEqual({ ...draft, answer: editedAnswer, contribution: "" });
     await page.reload();
     await expect(answer).toHaveValue(editedAnswer);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -417,6 +429,8 @@ for (const width of [1440, 375]) {
       path: `artifacts/application-simplified-${width}.png`,
       fullPage: true,
     });
+    // A legacy draft has no own-contribution sentence; submission requires one.
+    await fillContribution(page);
     await answer.focus();
     await page.keyboard.press("Tab");
     await page.keyboard.press("Space");
@@ -812,6 +826,7 @@ for (const width of [1280, 390]) {
     const form = page.getByRole("form", { name: "Twoja aplikacja", exact: true });
     const answer = form.getByLabel("Dlaczego pasujesz do tej roli?");
     const text = "Prowadziłam badania i wdrożenie automatyzacji obsługi zgłoszeń w produkcie B2B.";
+    await fillContribution(page);
     await answer.fill(text);
     await form.getByRole("checkbox").check();
     const description = offer.locator("summary");
@@ -846,6 +861,7 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
     await choose(page, "Anna Kowalska");
     await page.goto("/#/aplikuj/ai-product-manager");
     const answer = page.getByLabel("Dlaczego pasujesz do tej roli?");
+    await fillContribution(page);
     await answer.fill("krótko");
     await page.getByRole("button", { name: "Wyślij aplikację", exact: true }).click();
     await expect(

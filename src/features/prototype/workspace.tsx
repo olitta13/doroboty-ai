@@ -10,7 +10,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { JobCard } from "@/features/jobs/job-card";
 import { ApplicationOfferPreview } from "@/features/jobs/application-offer-preview";
 import { usePrototype } from "./store";
-import { currentPerson, publishedJobs, stageLabels, MIN_APPLICATION_ANSWER_LENGTH } from "./model";
+import {
+  currentPerson,
+  publishedJobs,
+  stageLabels,
+  MIN_APPLICATION_ANSWER_LENGTH,
+  MIN_CONTRIBUTION_LENGTH,
+  MAX_CONTRIBUTION_LENGTH,
+} from "./model";
+import { DEMO_PREFIX } from "./shortlist";
+import { EmployerShortlist } from "./employer-shortlist";
 import { PageTitle, Empty, NotFound, Notice } from "./shell";
 import { CvAttachment } from "./cv-attachment";
 import { MatchScore } from "./match-score";
@@ -33,8 +42,10 @@ export function PersonPicker() {
   const audience = params.get("audience");
   const people =
     audience === "candidate" || audience === "employer"
-      ? state.people.filter((person) => person.role === audience)
-      : state.people;
+      ? state.people.filter(
+          (person) => person.role === audience && !person.id.startsWith(DEMO_PREFIX),
+        )
+      : state.people.filter((person) => !person.id.startsWith(DEMO_PREFIX));
   const safeNext = next && /^\/(?!\/)/.test(next) && !next.startsWith("/auth") ? next : null;
   return (
     <section className="prototype-section max-w-4xl">
@@ -239,6 +250,8 @@ export function ApplyPage() {
   const notes = draft?.notes ?? "";
   const generated = draft?.generated ?? "";
   const [answer, setAnswer] = useState(draft?.answer ?? "");
+  const [contribution, setContribution] = useState(draft?.contribution ?? "");
+  const contributionInput = useRef<HTMLTextAreaElement>(null);
   const [consent, setConsent] = useState(false);
   const [message, setMessage] = useState("");
   const [attempted, setAttempted] = useState(false);
@@ -255,6 +268,8 @@ export function ApplyPage() {
   }, [submitted, navigate]);
   const answerLength = answer.trim().length;
   const answerInvalid = attempted && answerLength < MIN_APPLICATION_ANSWER_LENGTH;
+  const contributionLength = contribution.trim().length;
+  const contributionInvalid = attempted && contributionLength < MIN_CONTRIBUTION_LENGTH;
   const consentInvalid = attempted && !consent;
   if (!job) return <NotFound />;
   const existing = state.applications.find(
@@ -273,6 +288,10 @@ export function ApplyPage() {
     e.preventDefault();
     if (submittedOnce.current) return;
     setAttempted(true);
+    if (contributionLength < MIN_CONTRIBUTION_LENGTH) {
+      contributionInput.current?.focus();
+      return;
+    }
     if (answerLength < MIN_APPLICATION_ANSWER_LENGTH) {
       answerInput.current?.focus();
       return;
@@ -281,7 +300,7 @@ export function ApplyPage() {
       document.getElementById("application-consent")?.focus();
       return;
     }
-    if (run({ type: "submit", jobId: job!.id, notes, generated, answer, consent })) {
+    if (run({ type: "submit", jobId: job!.id, notes, generated, answer, contribution, consent })) {
       submittedOnce.current = true;
       setSubmitted(true);
       if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -321,6 +340,38 @@ export function ApplyPage() {
               layout="row"
               contextLabel="CV z Twojego profilu"
             />
+          </section>
+          <section
+            className="application-form-section application-answer contribution-field"
+            aria-label="Twój własny wkład"
+          >
+            <Field label="Co w opisanym projekcie zrobiłaś lub zrobiłeś samodzielnie? Jedno zdanie.">
+              <Textarea
+                disabled={submitted}
+                ref={contributionInput}
+                required
+                rows={3}
+                minLength={MIN_CONTRIBUTION_LENGTH}
+                maxLength={MAX_CONTRIBUTION_LENGTH}
+                aria-invalid={contributionInvalid || undefined}
+                aria-describedby="application-contribution-help"
+                value={contribution}
+                placeholder="Np. Sama przeprowadziłam 12 wywiadów i zaprojektowałam proces; integrację zrobił zespół IT."
+                onChange={(e) => {
+                  setContribution(e.target.value);
+                  setConsent(false);
+                }}
+              />
+            </Field>
+            <p
+              id="application-contribution-help"
+              role={contributionInvalid ? "alert" : undefined}
+              className={contributionInvalid ? "error-message" : "text-sm text-muted-foreground"}
+            >
+              {contributionInvalid
+                ? `Opisz swój wkład w co najmniej ${MIN_CONTRIBUTION_LENGTH} znakach (obecnie: ${contributionLength}).`
+                : `Oddziel swoją pracę od pracy zespołu. Pracodawca zobaczy to zdanie jako pierwsze. ${contributionLength}/${MAX_CONTRIBUTION_LENGTH} znaków.`}
+            </p>
           </section>
           <section
             className="application-form-section application-answer"
@@ -387,7 +438,7 @@ export function ApplyPage() {
                 disabled={submitted}
                 variant="outline"
                 onClick={() => {
-                  if (run({ type: "draft", jobId: job.id, notes, generated, answer }))
+                  if (run({ type: "draft", jobId: job.id, notes, generated, answer, contribution }))
                     setMessage("Szkic został zapisany.");
                 }}
               >
@@ -411,6 +462,10 @@ export function ApplyPage() {
   );
 }
 export function ApplicationsPage({ employer = false }: { employer?: boolean }) {
+  if (employer) return <EmployerShortlist allApplications={<ApplicationList employer />} />;
+  return <ApplicationList />;
+}
+function ApplicationList({ employer = false }: { employer?: boolean }) {
   const { state } = usePrototype();
   const person = currentPerson(state)!;
   const [query, setQuery] = useState("");
@@ -424,7 +479,7 @@ export function ApplicationsPage({ employer = false }: { employer?: boolean }) {
   );
   return (
     <>
-      <PageTitle>{employer ? "Kandydaci" : "Moje aplikacje"}</PageTitle>
+      {!employer && <PageTitle>Moje aplikacje</PageTitle>}
       {params.has("wyslano") && (
         <Notice>
           <CheckCircle2 className="inline size-5" /> Aplikacja została wysłana.

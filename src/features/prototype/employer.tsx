@@ -49,12 +49,20 @@ export function EmployerJobs() {
                     {job.publicationStatus === "published" ? "Opublikowana" : "Szkic"}
                   </p>
                 </div>
-                <Link
-                  to={`/oferty/${job.slug}`}
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
-                  Zobacz ofertę
-                </Link>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to={`/app/kandydaci?oferta=${job.id}`}
+                    className={buttonVariants({ size: "sm" })}
+                  >
+                    Krótka lista kandydatów
+                  </Link>
+                  <Link
+                    to={`/oferty/${job.slug}`}
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
+                  >
+                    Zobacz ofertę
+                  </Link>
+                </div>
               </div>
             </article>
           ))
