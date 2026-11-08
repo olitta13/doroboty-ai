@@ -76,11 +76,6 @@ footer {
   line-height: 1.02;
   letter-spacing: -2.5px;
 }
-.people-art {
-  width: 100%;
-  max-width: 420px;
-  justify-self: center;
-}
 .prototype-section {
   max-width: 1280px;
   padding-block: 48px;
@@ -209,9 +204,6 @@ footer {
   }
   .home-intro h1 {
     font-size: 43px;
-  }
-  .people-art {
-    max-width: 230px;
   }
 }
 

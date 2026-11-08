@@ -7,7 +7,7 @@ import { usePrototype } from "./store";
 import { publishedJobs } from "./model";
 import { cn } from "@/lib/utils";
 
-import peopleArt from "../../../docs/design-system/agent-kit/assets/people.png";
+import { HeroArt, HeroHeadline } from "./hero-art";
 
 const categories = [
   {
@@ -39,14 +39,14 @@ export default function HomePage() {
             <Badge variant="secondary" className="px-3 py-1 text-xs">
               Dobra robota. Z AI w środku.
             </Badge>
-            <h1 className="mt-6 max-w-4xl text-5xl leading-[var(--gui-leading-xxl)] font-semibold tracking-[var(--gui-tracking-xs)] sm:text-6xl lg:text-7xl">
-              Praca dla ludzi, którzy dowożą z AI.
+            <h1 className="hero-headline mt-6 max-w-4xl text-5xl leading-[var(--gui-leading-xxl)] font-semibold tracking-[var(--gui-tracking-xs)] sm:text-6xl lg:text-7xl">
+              <HeroHeadline />
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            <p className="hero-follow mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
               Wyselekcjonowane role, w których AI jest częścią odpowiedzialności, decyzji i wyniku
               pracy — nie dopiskiem w employer brandingu.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="hero-follow mt-8 flex flex-wrap gap-3">
               <Link to="/oferty" className={buttonVariants({ size: "lg" })}>
                 Zobacz oferty <ArrowRight />
               </Link>
@@ -58,7 +58,7 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
-          <img className="people-art" src={peopleArt} alt="Dwie osoby pracujące razem z laptopem" />
+          <HeroArt />
         </div>
       </section>
 

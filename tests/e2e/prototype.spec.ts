@@ -312,6 +312,30 @@ test("core screens have no serious accessibility violations", async ({ page }) =
   expect(results.violations).toEqual([]);
 });
 
+for (const reducedMotion of ["no-preference", "reduce"] as const) {
+  test(`homepage hero art keeps one accessible image with motion ${reducedMotion}`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion });
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Praca dla ludzi, którzy dowożą z AI.",
+    );
+    const art = page.getByRole("img", { name: "Dwie osoby pracujące razem z laptopem" });
+    await art.scrollIntoViewIfNeeded();
+    await expect(art).toHaveAttribute("data-in-view", "");
+    const running = await page.evaluate(
+      () => document.querySelector(".home-intro")?.getAnimations({ subtree: true }).length ?? -1,
+    );
+    if (reducedMotion === "reduce") expect(running).toBe(0);
+    else expect(running).toBeGreaterThan(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  });
+}
+
 test("public home and filters reflow at 320px with no external requests", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 900 });
   await page.goto("/");
