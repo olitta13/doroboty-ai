@@ -19,7 +19,9 @@ export function initAnalytics(): void {
     defaults: "2025-05-24",
     // Hash routes change via history API; record each screen as a pageview.
     capture_pageview: "history_change",
-    autocapture: true,
+    // Clicks on buttons and links only: form fields, text areas and record
+    // content (CVs, notes) are never autocaptured.
+    autocapture: { element_allowlist: ["a", "button"] },
     // No cookies or localStorage: no consent banner needed for this prototype,
     // at the cost of counting each visit as a new anonymous visitor.
     persistence: "memory",
