@@ -1035,3 +1035,61 @@ test("candidate snapshot supports custom CV and long content at desktop and mobi
     record.answer,
   );
 });
+
+test("two tabs share the latest saved scenario instead of overwriting it", async ({ page }) => {
+  const employerTab = await page.context().newPage();
+  await employerTab.goto("/");
+  await application(page);
+  await expect(page.getByText("Aplikacja została wysłana")).toBeVisible();
+  const annaApplications = () =>
+    page.evaluate(
+      (key) =>
+        (
+          JSON.parse(localStorage.getItem(key) ?? "{}").applications as
+            { contribution?: string }[] | undefined
+        )?.filter((record) => record.contribution?.startsWith("Sama przeprowadziłam badania"))
+          .length ?? 0,
+      STORAGE_KEY,
+    );
+  expect(await annaApplications()).toBe(1);
+  await choose(employerTab, "Karolina Wiśniewska");
+  await employerTab.goto("/#/app/kandydaci");
+  await expect(employerTab.getByText("Anna Kowalska").first()).toBeVisible();
+  expect(await annaApplications()).toBe(1);
+  await employerTab.close();
+});
+
+test("a screen error shows a recovery message instead of a blank page", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.addInitScript(() => {
+    const Original = Intl.NumberFormat;
+    const flagged = window as unknown as { __failRender?: boolean };
+    Intl.NumberFormat = function (...args: ConstructorParameters<typeof Intl.NumberFormat>) {
+      if (flagged.__failRender) throw new Error("Simulated render failure");
+      return new Original(...args);
+    } as unknown as typeof Intl.NumberFormat;
+  });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.evaluate(() => {
+    (window as unknown as { __failRender?: boolean }).__failRender = true;
+    window.location.hash = "#/oferty";
+  });
+  const alert = page.getByRole("alert");
+  await expect(alert.getByRole("heading", { name: "Ten ekran napotkał błąd" })).toBeVisible();
+  await expect(alert.getByRole("link", { name: "Ustawienia i eksport danych" })).toHaveAttribute(
+    "href",
+    "#/app/settings",
+  );
+  expect(errors.some((text) => text.includes("[DoRoboty.ai] Błąd ekranu"))).toBe(true);
+  await page.evaluate(() => {
+    (window as unknown as { __failRender?: boolean }).__failRender = false;
+  });
+  await alert.getByRole("link", { name: "Strona główna" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Praca dla ludzi, którzy dowożą z AI.",
+  );
+});

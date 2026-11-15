@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { initialState, transition, type Action, type State } from "./model";
-import { parseState, readState, saveState, type StoragePort } from "./storage";
+import { parseState, readState, saveState, STORAGE_KEY, type StoragePort } from "./storage";
 function browserStorage(): StoragePort | null {
   try {
     return window.localStorage;
@@ -53,6 +53,24 @@ function useStore() {
   }
   useEffect(() => {
     document.documentElement.classList.remove("dark");
+  }, []);
+  // Another tab saved a newer scenario: adopt it before this tab writes again,
+  // otherwise its older in-memory state would overwrite the other tab's work.
+  useEffect(() => {
+    function adoptSavedScenario(event: StorageEvent) {
+      if (event.key !== STORAGE_KEY || event.newValue === null) return;
+      try {
+        const next = parseState(event.newValue);
+        latest.current = next;
+        setState(next);
+        setIssue("");
+        setBlocked(false);
+      } catch {
+        // An invalid value written elsewhere is ignored; this tab keeps its state.
+      }
+    }
+    window.addEventListener("storage", adoptSavedScenario);
+    return () => window.removeEventListener("storage", adoptSavedScenario);
   }, []);
   return {
     state,

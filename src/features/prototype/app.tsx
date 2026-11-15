@@ -1,4 +1,5 @@
 import { HashRouter, Routes, Route, Navigate } from "react-router";
+import { PrototypeErrorBoundary } from "./error-boundary";
 import { PrototypeProvider } from "./store";
 import { Shell, NotFound } from "./shell";
 import HomePage from "./home";
@@ -149,10 +150,12 @@ function AppRoutes() {
 }
 export function App() {
   return (
-    <PrototypeProvider>
-      <HashRouter>
-        <AppRoutes />
-      </HashRouter>
-    </PrototypeProvider>
+    <PrototypeErrorBoundary>
+      <PrototypeProvider>
+        <HashRouter>
+          <AppRoutes />
+        </HashRouter>
+      </PrototypeProvider>
+    </PrototypeErrorBoundary>
   );
 }
