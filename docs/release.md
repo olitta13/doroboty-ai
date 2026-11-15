@@ -6,6 +6,12 @@ builds `main` with `npm ci` and `npm run build` on the Node version from
 <https://olitta13.github.io/doroboty-ai/>. There is no server, database or
 secret. Visitor data lives only in each visitor's browser (localStorage).
 
+The same `main` branch is also published on Netlify (quest Deploy Pilot).
+`netlify.toml` sets the build command, the `dist/` directory, Node 24 and
+basic security headers; no environment variables are required. Netlify builds
+every push to `main` automatically, and a rollback is „Publish deploy” on an
+earlier deploy in the Netlify Deploys tab.
+
 Owner and first responder: Aleksandra Doruch (repository owner of
 `olitta13/doroboty-ai`, with access to its Actions tab).
 
