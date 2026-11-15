@@ -1093,3 +1093,15 @@ test("a screen error shows a recovery message instead of a blank page", async ({
     "Praca dla ludzi, którzy dowożą z AI.",
   );
 });
+
+test("footer tells visitors where to report a problem", async ({ page }) => {
+  await page.goto("/");
+  const report = page
+    .getByRole("navigation", { name: "Stopka" })
+    .getByRole("link", { name: "Zgłoś problem" });
+  await expect(report).toHaveAttribute(
+    "href",
+    "https://github.com/olitta13/doroboty-ai/issues/new?template=bug.yml",
+  );
+  await expect(report).toHaveAttribute("rel", "noreferrer");
+});

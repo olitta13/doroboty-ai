@@ -298,6 +298,14 @@ export function Shell() {
                 <Link to="/oferty">Oferty</Link>
                 <Link to="/metodologia">Metodologia</Link>
                 <Link to="/polityka-prywatnosci">Prywatność</Link>
+                <a
+                  className="inline-flex items-center gap-1"
+                  href="https://github.com/olitta13/doroboty-ai/issues/new?template=bug.yml"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Zgłoś problem <ArrowUpRight className="size-4" />
+                </a>
                 <Link className="inline-flex items-center gap-1" to="/auth/sign-in">
                   Strefa case <ArrowUpRight className="size-4" />
                 </Link>
